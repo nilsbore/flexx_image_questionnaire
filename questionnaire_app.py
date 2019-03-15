@@ -7,11 +7,14 @@ more compact.
 This example also demonstrates how CSS can be used to apply a greenish theme.
 """
 
-from flexx import flx, event
+from flexx import flx, event, config
 from tornado.web import StaticFileHandler
 import string
 import random
 import json
+
+config.hostname = "0.0.0.0" # maybe use socket.gethostname()
+config.port = 8097
 
 dirname = "/home/nbore/Installs/flexx_test"
 
@@ -212,10 +215,12 @@ class MainApp(flx.PyComponent):
         #with open("temp.json", 'w') as fp:
             json.dump(data, fp)
 
+
 if __name__ == '__main__':
     #m = flx.launch(ThemedForm, 'app')
     #flx.run()
     #app = flx.App(Questionnaire)
     app = flx.App(MainApp)
-    app.serve('foo')
+    #app.serve('foo')
+    app.serve('')
     flx.start()
