@@ -16,7 +16,7 @@ import json
 config.hostname = "0.0.0.0" # maybe use socket.gethostname()
 config.port = 8097
 
-dirname = "/home/nbore/Installs/flexx_test"
+dirname = "/home/nbore/Installs/flexx_image_questionnaire"
 
 # The program will look for these folders and present the lists as options
 choices = {"1": ["q.png", "1.png", "2.png"],
@@ -44,10 +44,16 @@ class ImageChooser(flx.Widget):
         }
         """
 
+    @event.reaction('pointer_click')
+    def radio_clicked(self, *events):
+        self.choice_done = True
+        self.parent.parent.parent.parent.parent.parent.check_choices()
+
     def init(self, choicedir, choices):
 
         self.choicedir = choicedir # "1"
         self.choices = choices #choices["1"]
+        self.choice_done = False
 
         with flx.GroupWidget(title="Which sidescan waterfall image looks most realistic?"):
             with flx.VBox():
@@ -113,8 +119,6 @@ class UserDetails(flx.Widget):
                 flx.Widget(flex=1)  # Add a spacer
                 self.name = flx.LineEdit(title='Name:', text='', maxsize=(600, 0))
                 self.affiliation = flx.LineEdit(title='Affiliation:', text='', maxsize=(600, 0))
-                #self.b3 = flx.LineEdit(title='Favorite color:', text='')
-                #flx.Button(text='Submit')
                 with flx.HBox():
                     flx.Label(text="Familiarity with sidescan (0-10):")
                     self.familiarity = self.tension = flx.Slider(min=0, max=10, value=5,
@@ -124,7 +128,6 @@ class UserDetails(flx.Widget):
             flx.Widget(flex=1)  # Add a spacer
 
 class Questionnaire(flx.Widget):
-#class Questionnaire(flx.PyComponent):
 
     CSS = """
         .flx-Button {
@@ -136,10 +139,16 @@ class Questionnaire(flx.Widget):
         .flx-GroupWidget {
             border: 2px solid #9d9;
         }
-        .flx-Slider {
-            thumb-color: #9d9;
-        }
         """
+
+    def check_choices(self):
+
+        for q in self.questions[1:]:
+            if not q.im_chooser.choice_done:
+                return
+
+        self.submit.set_disabled(False)
+        self.submit.apply_style("background: #9d9;")
 
     @event.reaction('next.pointer_down')
     def next_clicked(self, *events):
@@ -196,15 +205,16 @@ class Questionnaire(flx.Widget):
                 self.previous = flx.Button(text="Previous")
                 flx.Widget(flex=1)  # Add a spacer
                 self.t1 = flx.Label(text="Question 1/13")
-                self.submit = flx.Button(text="Submit") #, disabled=True)
+                self.submit = flx.Button(text="Submit", disabled=True)
+                self.submit.apply_style("background: #D3D3D3;")
                 flx.Widget(flex=1)  # Add a spacer
                 self.next = flx.Button(text="Next")
 
 
 class MainApp(flx.PyComponent):
+#class MainApp(flx.Widget):
 
     def init(self):
-
         self.main_widget = Questionnaire()
 
     @flx.action
@@ -212,7 +222,6 @@ class MainApp(flx.PyComponent):
         rnd_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
         filename = data["name"].replace(' ', '_') + "_" + rnd_string + ".json"
         with open(filename, 'w') as fp:
-        #with open("temp.json", 'w') as fp:
             json.dump(data, fp)
 
 
@@ -221,6 +230,5 @@ if __name__ == '__main__':
     #flx.run()
     #app = flx.App(Questionnaire)
     app = flx.App(MainApp)
-    #app.serve('foo')
     app.serve('')
     flx.start()
