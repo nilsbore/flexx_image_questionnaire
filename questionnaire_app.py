@@ -1,11 +1,4 @@
 #!/usr/bin/python3
-"""
-Simple example that shows two forms, one which is stretched, and one
-in which we use a dummy Widget to fill up space so that the form is
-more compact.
-
-This example also demonstrates how CSS can be used to apply a greenish theme.
-"""
 
 from flexx import flx, event, config
 from tornado.web import StaticFileHandler
@@ -127,6 +120,25 @@ class UserDetails(flx.Widget):
                 flx.Widget(flex=1)  # Add a spacer
             flx.Widget(flex=1)  # Add a spacer
 
+class DoneScreen(flx.Widget):
+
+    CSS = """
+        .flx-Button {
+            background: #9d9;
+        }
+        .flx-LineEdit {
+            border: 2px solid #9d9;
+        }
+        .flx-GroupWidget {
+            border: 2px solid #9d9;
+        }
+        """
+
+    def init(self):
+
+        self.thank_you = flx.Label(text="Submitted! Thank you for filling out the questionnaire!")
+
+
 class Questionnaire(flx.Widget):
 
     CSS = """
@@ -185,7 +197,7 @@ class Questionnaire(flx.Widget):
 
         print(filled_data)
         self.root.save_choices(filled_data)
-
+        self.stack.set_current(self.done)
 
     def init(self):
 
@@ -200,11 +212,12 @@ class Questionnaire(flx.Widget):
                 self.questions.append(UserDetails())
                 for key, val in choices.items():
                     self.questions.append(FolderChooser(key, val))
+                self.done = DoneScreen()
 
             with flx.HBox():
                 self.previous = flx.Button(text="Previous")
                 flx.Widget(flex=1)  # Add a spacer
-                self.t1 = flx.Label(text="Question 1/13")
+                self.t1 = flx.Label(text="Question 1/" + len(self.questions))
                 self.submit = flx.Button(text="Submit", disabled=True)
                 self.submit.apply_style("background: #D3D3D3;")
                 flx.Widget(flex=1)  # Add a spacer
