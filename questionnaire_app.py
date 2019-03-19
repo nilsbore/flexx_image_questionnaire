@@ -9,18 +9,32 @@ import json
 config.hostname = "0.0.0.0" # maybe use socket.gethostname()
 config.port = 8097
 
-dirname = "/home/nbore/Installs/flexx_image_questionnaire"
+#dirname = "/home/nbore/Installs/flexx_image_questionnaire"
+dirname = "/home/nbore/Installs/ceres_test/src/pybathy_maps/examples/prediction_results"
 
 # The program will look for these folders and present the lists as options
-choices = {"1": ["q.png", "1.png", "2.png"],
-           "2": ["q.png", "1.png", "2.png", "3.png"],
-           "3": ["q.png", "1.png", "2.png"],
-           "4": ["q.png", "1.png", "2.png", "3.png"]}
+#choices = {"1": ["q.png", "1.png", "2.png", "3.png"],
+#           "2": ["q.png", "1.png", "2.png", "3.png"],
+#           "3": ["q.png", "1.png", "2.png"],
+#           "4": ["q.png", "1.png", "2.png", "3.png"]}
+
+choices = {}
+#choices = {str(i+1): ["q.png", "1.png", "2.png", "3.png"] for i in range(0, 30)}
+folders = list(range(0, 113))
+random.shuffle(folders)
+for i in folders[:30]: # range(0, 30):
+    options = ["1.png", "2.png", "3.png"]
+    random.shuffle(options)
+    choices[str(i+1)] = ["q.png"] + options[:2]
+
+class NoCacheStaticFileHandler(StaticFileHandler):
+    def set_extra_headers(self, path):
+        self.set_header("Cache-control", "no-cache")
 
 # Make use of Tornado's static file handler
 tornado_app = flx.create_server().app
 tornado_app.add_handlers(r".*", [
-        (r"/images/(.*)", StaticFileHandler, {"path": dirname}),
+        (r"/images/(.*)", NoCacheStaticFileHandler, {"path": dirname}),
             ])
 
 class ImageChooser(flx.Widget):
@@ -54,7 +68,7 @@ class ImageChooser(flx.Widget):
                     self.ims = []
                     for c in self.choices[1:]:
                         with flx.VFix():
-                            self.ims.append(flx.ImageWidget(stretch=False, source="/images/"+self.choicedir+"/"+c, minsize=(512., 512.)))
+                            self.ims.append(flx.ImageWidget(stretch=False, source="/images/"+self.choicedir+"/"+c, minsize=(452., 712.)))
 
                 with flx.HFix() as option_form:
                     self.rs = [flx.RadioButton(text=str(i)) for i in range(1, len(self.choices))]
@@ -86,7 +100,7 @@ class FolderChooser(flx.Widget):
 
                 with flx.GroupWidget(title="Given this bathymetry and vehicle track..."):
                     with flx.VBox():
-                        self.i0 = flx.ImageWidget(stretch=False, source="/images/bathy.png")
+                        self.i0 = flx.ImageWidget(source="/images/"+self.choicedir+"/q.png", style="zoom: 2;")
                 self.im_chooser = ImageChooser(choicedir, choices)
             flx.Widget(flex=1)  # Add a spacer
 
@@ -236,7 +250,6 @@ class MainApp(flx.PyComponent):
         filename = data["name"].replace(' ', '_') + "_" + rnd_string + ".json"
         with open(filename, 'w') as fp:
             json.dump(data, fp)
-
 
 if __name__ == '__main__':
     #m = flx.launch(ThemedForm, 'app')
