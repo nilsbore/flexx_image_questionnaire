@@ -5,27 +5,33 @@ from tornado.web import StaticFileHandler
 import string
 import random
 import json
+import os
 
-config.hostname = "0.0.0.0" # maybe use socket.gethostname()
+config.hostname = "localhost"
 config.port = 8097
 
-#dirname = "/home/nbore/Installs/flexx_image_questionnaire"
-dirname = "/home/nbore/Installs/ceres_test/src/pybathy_maps/examples/prediction_results"
-
-# The program will look for these folders and present the lists as options
-#choices = {"1": ["q.png", "1.png", "2.png", "3.png"],
-#           "2": ["q.png", "1.png", "2.png", "3.png"],
-#           "3": ["q.png", "1.png", "2.png"],
-#           "4": ["q.png", "1.png", "2.png", "3.png"]}
+dirname = "/home/nbore/Data/gan_generated_results"
+subdir1 = "1"
+subdir2 = "2"
+nbr_from_1 = 20
+nbr_from_2 = 10
 
 choices = {}
-#choices = {str(i+1): ["q.png", "1.png", "2.png", "3.png"] for i in range(0, 30)}
-folders = list(range(0, 113))
-random.shuffle(folders)
-for i in folders[:30]: # range(0, 30):
+
+folders_in_1 = [o for o in os.listdir(os.path.join(dirname, subdir1)) if os.path.isdir(os.path.join(dirname, subdir1, o))]
+folders_in_2 = [o for o in os.listdir(os.path.join(dirname, subdir2)) if os.path.isdir(os.path.join(dirname, subdir2, o))]
+
+random.shuffle(folders_in_1)
+for i in folders_in_1[:nbr_from_1]:
     options = ["1.png", "2.png", "3.png"]
     random.shuffle(options)
-    choices[str(i+1)] = ["q.png"] + options[:2]
+    choices[subdir1+"/"+i] = ["q.png"] + options[:2]
+
+random.shuffle(folders_in_2)
+for i in folders_in_2[:nbr_from_2]:
+    options = ["1.png", "2.png", "3.png"]
+    random.shuffle(options)
+    choices[subdir2+"/"+i] = ["q.png"] + options[:2]
 
 class NoCacheStaticFileHandler(StaticFileHandler):
     def set_extra_headers(self, path):
@@ -68,7 +74,7 @@ class ImageChooser(flx.Widget):
                     self.ims = []
                     for c in self.choices[1:]:
                         with flx.VFix():
-                            self.ims.append(flx.ImageWidget(stretch=False, source="/images/"+self.choicedir+"/"+c, minsize=(452., 712.)))
+                            self.ims.append(flx.ImageWidget(stretch=False, source="/images/"+self.choicedir+"/"+c, minsize=(452., 852.)))
 
                 with flx.HFix() as option_form:
                     self.rs = [flx.RadioButton(text=str(i)) for i in range(1, len(self.choices))]
@@ -100,7 +106,9 @@ class FolderChooser(flx.Widget):
 
                 with flx.GroupWidget(title="Given this bathymetry and vehicle track..."):
                     with flx.VBox():
-                        self.i0 = flx.ImageWidget(source="/images/"+self.choicedir+"/q.png", style="zoom: 2;")
+                        #self.i0 = flx.ImageWidget(source="/images/"+self.choicedir+"/q.png", style="zoom: 2;")
+                        self.i0 = flx.ImageWidget(source="/images/"+self.choicedir+"/q.png", minsize=(452., 702.))
+                        self.i1 = flx.ImageWidget(source="/images/"+self.choicedir.split('/')[0]+"/colorbar.png")
                 self.im_chooser = ImageChooser(choicedir, choices)
             flx.Widget(flex=1)  # Add a spacer
 
