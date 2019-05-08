@@ -8,7 +8,7 @@ import json
 import os
 from datetime import datetime
 
-config.hostname = "130.237.218.110" #"localhost"
+config.hostname = "localhost"
 config.port = 8097
 dirname = "/home/nbore/Data/gan_generated_results"
 subdir1 = "1"
