@@ -6,32 +6,18 @@ import string
 import random
 import json
 import os
+from datetime import datetime
 
-config.hostname = "localhost"
+config.hostname = "130.237.218.110" #"localhost"
 config.port = 8097
-
 dirname = "/home/nbore/Data/gan_generated_results"
 subdir1 = "1"
 subdir2 = "2"
 nbr_from_1 = 20
 nbr_from_2 = 10
 
-choices = {}
-
 folders_in_1 = [o for o in os.listdir(os.path.join(dirname, subdir1)) if os.path.isdir(os.path.join(dirname, subdir1, o))]
 folders_in_2 = [o for o in os.listdir(os.path.join(dirname, subdir2)) if os.path.isdir(os.path.join(dirname, subdir2, o))]
-
-random.shuffle(folders_in_1)
-for i in folders_in_1[:nbr_from_1]:
-    options = ["1.png", "2.png", "3.png"]
-    random.shuffle(options)
-    choices[subdir1+"/"+i] = ["q.png"] + options[:2]
-
-random.shuffle(folders_in_2)
-for i in folders_in_2[:nbr_from_2]:
-    options = ["1.png", "2.png", "3.png"]
-    random.shuffle(options)
-    choices[subdir2+"/"+i] = ["q.png"] + options[:2]
 
 class NoCacheStaticFileHandler(StaticFileHandler):
     def set_extra_headers(self, path):
@@ -128,18 +114,49 @@ class UserDetails(flx.Widget):
 
     def init(self):
 
-        with flx.HFix():
+        help_string1 = """At KTH, we are experimenting with different ways of generating sidescan waterfall images
+                          from bathymetry. In our current research, we would like to collect input from experts on
+                          sidescan sonar. If you are used to looking at sidescan sonar images, we would therefore be
+                          very thankful if you could fill out the following questionnaire. The results are completely
+                          anonymous, and it should take approximately 10 minutes to fill out."""
+
+
+        help_string2 = """Instructions: first, fill in a few details that help us categorize the responses.
+                          Then click the "Next" button in the lower right corner. You will be presented with
+                          a small piece of bathymetry and two sidescan waterfall images. Please choose the one
+                          that you judge to be most realistic given the presented bathymetry. Note that both or
+                          none of the images might be absolutely realistic. Click the button "1" or "2" corresponding
+                          to the image and then click "Next". Repeat the procedure until you you reached the end
+                          and have one selection for each image pair. You then need to click the "Submit" button
+                          to finish the questionnaire."""
+
+
+        help_string3 = "If you have any questions, please contact: Nils Bore, nbore@kth.se"
+
+        with flx.VBox():
+
+            flx.Widget(minsize=20)  # Add a spacer
+            flx.Label(text=help_string1, wrap=1)
+            flx.Widget(minsize=20)  # Add a spacer
+            flx.Label(text=help_string2, wrap=1)
+            flx.Widget(minsize=20)  # Add a spacer
+            flx.Label(text=help_string3, wrap=1)
             flx.Widget(flex=1)  # Add a spacer
-            with flx.FormLayout(flex=1) as self.form:
+
+            with flx.HFix(flex=1):
                 flx.Widget(flex=1)  # Add a spacer
-                self.name = flx.LineEdit(title='Name:', text='', maxsize=(600, 0))
-                self.affiliation = flx.LineEdit(title='Affiliation:', text='', maxsize=(600, 0))
-                with flx.HBox():
-                    flx.Label(text="Familiarity with sidescan (0-10):")
-                    self.familiarity = self.tension = flx.Slider(min=0, max=10, value=5,
-                                                                 text=lambda: 'Familiarity: {value}', flex=1)
-                flx.Label(text='When done, click the "Next" button')
+                with flx.FormLayout(flex=1) as self.form:
+                    flx.Widget(flex=1)  # Add a spacer
+                    self.name = flx.LineEdit(title='Profession:', text='', maxsize=(600, 0))
+                    self.affiliation = flx.LineEdit(title='Affiliation:', text='', maxsize=(600, 0))
+                    with flx.HBox():
+                        flx.Label(text="Familiarity with sidescan (0-10):")
+                        self.familiarity = self.tension = flx.Slider(min=0, max=10, value=5,
+                                                                     text=lambda: 'Familiarity: {value}', flex=1)
+                    flx.Label(text='When done, click the "Next" button')
+                    flx.Widget(flex=1)  # Add a spacer
                 flx.Widget(flex=1)  # Add a spacer
+            
             flx.Widget(flex=1)  # Add a spacer
 
 class DoneScreen(flx.Widget):
@@ -159,6 +176,24 @@ class DoneScreen(flx.Widget):
     def init(self):
 
         self.thank_you = flx.Label(text="Submitted! Thank you for filling out the questionnaire!")
+
+class SubmitScreen(flx.Widget):
+
+    CSS = """
+        .flx-Button {
+            background: #9d9;
+        }
+        .flx-LineEdit {
+            border: 2px solid #9d9;
+        }
+        .flx-GroupWidget {
+            border: 2px solid #9d9;
+        }
+        """
+
+    def init(self):
+
+        self.do_submit = flx.Label(text='If you made a choice for each pair of images you should now be able to click the "Submit" button below!', wrap=1)
 
 
 class Questionnaire(flx.Widget):
@@ -183,6 +218,7 @@ class Questionnaire(flx.Widget):
 
         self.submit.set_disabled(False)
         self.submit.apply_style("background: #9d9;")
+        self.stack.set_current(self.do_submit)
 
     @event.reaction('next.pointer_down')
     def next_clicked(self, *events):
@@ -212,7 +248,10 @@ class Questionnaire(flx.Widget):
             #data[q.choicedir] = [
             try:
                 ind = map(lambda r: r.checked, q.im_chooser.rs).index(True)
-                filled_data[q.choicedir] = q.choices[1+ind]
+                if ind == 0:
+                    filled_data[q.choicedir] = (q.choices[1], q.choices[2])
+                else:
+                    filled_data[q.choicedir] = (q.choices[2], q.choices[1])
             except ValueError:
                 filled_data[q.choicedir] = "None"
                 print("Could not find choice!")
@@ -221,7 +260,7 @@ class Questionnaire(flx.Widget):
         self.root.save_choices(filled_data)
         self.stack.set_current(self.done)
 
-    def init(self):
+    def init(self, choices):
 
         self.current_question = 0
 
@@ -234,6 +273,7 @@ class Questionnaire(flx.Widget):
                 self.questions.append(UserDetails())
                 for key, val in choices.items():
                     self.questions.append(FolderChooser(key, val))
+                self.do_submit = SubmitScreen()
                 self.done = DoneScreen()
 
             with flx.HBox():
@@ -246,16 +286,32 @@ class Questionnaire(flx.Widget):
                 self.next = flx.Button(text="Next")
 
 
+#class MainApp(flx.PyComponent):
 class MainApp(flx.PyComponent):
 #class MainApp(flx.Widget):
 
     def init(self):
-        self.main_widget = Questionnaire()
+
+        self.rnd_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+        choices = {}
+        random.shuffle(folders_in_1)
+        for i in folders_in_1[:nbr_from_1]:
+            options = ["1.png", "2.png", "3.png"]
+            random.shuffle(options)
+            choices[subdir1+"/"+i] = ["q.png"] + options[:2]
+
+        random.shuffle(folders_in_2)
+        for i in folders_in_2[:nbr_from_2]:
+            options = ["1.png", "2.png", "3.png"]
+            random.shuffle(options)
+            choices[subdir2+"/"+i] = ["q.png"] + options[:2]
+        self.main_widget = Questionnaire(choices)
 
     @flx.action
     def save_choices(self, data):
         rnd_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
-        filename = data["name"].replace(' ', '_') + "_" + rnd_string + ".json"
+        filename = data["name"].replace(' ', '_') + "_" + self.rnd_string + "_" + rnd_string + ".json"
+        data["time"] = str(datetime.now())
         with open(filename, 'w') as fp:
             json.dump(data, fp)
 
