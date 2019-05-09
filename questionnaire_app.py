@@ -8,7 +8,7 @@ import json
 import os
 from datetime import datetime
 
-config.hostname = "130.237.218.110" #"localhost"
+config.hostname = "localhost"
 config.port = 8097
 dirname = "/home/nbore/Data/gan_generated_results"
 subdir1 = "1"
@@ -56,15 +56,13 @@ class ImageChooser(flx.Widget):
 
         with flx.GroupWidget(title="Which sidescan waterfall image looks most realistic?"):
             with flx.VBox():
+                with flx.HFix() as option_form:
+                    self.rs = [flx.RadioButton(text=str(i)) for i in range(1, len(self.choices))]
                 with flx.HFix():
                     self.ims = []
                     for c in self.choices[1:]:
                         with flx.VFix():
                             self.ims.append(flx.ImageWidget(stretch=False, source="/images/"+self.choicedir+"/"+c, minsize=(452., 852.)))
-
-                with flx.HFix() as option_form:
-                    self.rs = [flx.RadioButton(text=str(i)) for i in range(1, len(self.choices))]
-
 
 class FolderChooser(flx.Widget):
 
@@ -175,7 +173,13 @@ class DoneScreen(flx.Widget):
 
     def init(self):
 
-        self.thank_you = flx.Label(text="Submitted! Thank you for filling out the questionnaire!")
+        with flx.VBox():
+            flx.Widget(flex=1)
+            with flx.HBox():
+                flx.Widget(flex=1)
+                self.thank_you = flx.Label(text="Submitted! Thank you for filling out the questionnaire! You can now close the webpage")
+                flx.Widget(flex=1)
+            flx.Widget(flex=1)
 
 class SubmitScreen(flx.Widget):
 
@@ -193,7 +197,13 @@ class SubmitScreen(flx.Widget):
 
     def init(self):
 
-        self.do_submit = flx.Label(text='If you made a choice for each pair of images you should now be able to click the "Submit" button below!', wrap=1)
+        with flx.VBox():
+            flx.Widget(flex=1)
+            with flx.HBox():
+                flx.Widget(flex=1)
+                self.do_submit = flx.Label(text='Please click the "Submit" button below to send in the questionnaire!', wrap=1)
+                flx.Widget(flex=1)
+            flx.Widget(flex=1)
 
 
 class Questionnaire(flx.Widget):
