@@ -65,6 +65,21 @@ def to_percentages(preferences):
 
     return percent_preferences
 
+def print_table(preferences):
+
+    print "Vs. & GAN & Lambertian \\\\"
+    print "\hline"
+    print "\\rowcolor{lightgray} Ground truth & %.0f\\%% & %.0f\\%% \\\\" % (preferences[1, 2], preferences[0, 2])
+    print "Other model  & %.0f\\%% & %.0f\\%% \\\\" % (preferences[1, 0], preferences[0, 1])
+
+def print_comparison_table(preferences1, preferences2):
+
+    print "& \multicolumn{2}{c}{GAN} & \multicolumn{2}{c}{Lambertian} \\\\"
+    print "Vs. & Data 1 & Data 2 & Data 1 & Data 2 \\\\"
+    print "\hline"
+    print "\\rowcolor{lightgray} Ground truth & %.0f\\%% & %.0f\\%% & %.0f\\%% & %.0f\\%% \\\\"  % (preferences1[1, 2], preferences2[1, 2], preferences1[0, 2], preferences2[0, 2]) 
+    print "Other model & %.0f\\%% & %.0f\\%% & %.0f\\%% & %.0f\\%% \\\\" % (preferences1[1, 0], preferences2[1, 0], preferences1[0, 1], preferences2[0, 1])
+
 preferences1 = np.zeros((3, 3))
 preferences2 = np.zeros((3, 3))
 
@@ -79,13 +94,17 @@ preferences = preferences1 + preferences2
 
 print "Preferences 1:"
 print preferences1
-print to_percentages(preferences1)
+percentages1 = to_percentages(preferences1)
+print percentages1
 
 print "Preferences 2:"
 print preferences2
-print to_percentages(preferences2)
+percentages2 = to_percentages(preferences2)
+print percentages2
+print_comparison_table(percentages1, percentages2)
 
 print "Preferences:"
 print preferences
-
-print to_percentages(preferences)
+percentages = to_percentages(preferences)
+print percentages
+print_table(percentages)
